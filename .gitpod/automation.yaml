@@ -1,0 +1,47 @@
+# defines automation services (optional)
+#services:
+    # serviceReference is an identifier for the service within the environment.
+    # It is used when referencing the service, e.g. from the CLI.
+    # It needs to only contain alphanumeric characters, underscores, and hyphens, and must be between 1 and 128 characters long.
+    #serviceReference:
+        # Name is a required, human readable string.
+        #name: Human readable name
+        #description: Optional description providing more detail
+        # triggeredBy lists all trigger that start the service. If none are provided the service isn't started automatically.
+        # See below for a complete list of trigger.
+        #triggeredBy:
+            #- ...
+       #commands:
+            # start is a mandatory command constitutes the service itself and is expected to continue running until stopped.
+            # If this command fails (i.e. exits with a non-zero exit code), the service is considered failed.
+            #start: your-service-command
+            # ready acts as a readiness check, determining when the service is fully operational and available for use.
+            # Gitpod executes this command periodically (once per second) until it exits with a status code of 0, indicating the service is ready. # If you don’t specify a ready command, Gitpod assumes the service is immediately available after the start command completes.
+           # ready: your-service-command --is-running
+            # This optional command allows you to define a graceful shutdown procedure for your service.
+            # If omitted, Gitpod will send a SIGTERM signal to terminate the service when needed.
+            #stop: killall your-service-command
+
+# defines automation tasks (optional)
+tasks:
+    taskReference:
+        # Name is a required, human readable string.
+        name: initial
+        description: initial running
+        # triggeredBy lists all trigger that start the service. If none are provided the service isn't started automatically.
+        # See below for a complete list of trigger.
+        triggeredBy:
+            # postEnvironmentStart activates every time the environment is started, e.g. on first start
+            - postEnvironmentStart
+            # postEnvironmentStart activates every time the devcontainer is started, e.g. on first start or devcontainer rebuild
+            - postDevcontainerStart
+            # manual trigger provides a unique affordance in the user interface, allowing developers to start an action on demand.
+            #- manual
+        # dependsOn expresses a dependency on another task which ensures that this other task runs before this one.
+        #dependsOn:
+            #- someOtherTask
+        # command is the actual task command that gets executed. Gitpod will run this as a shell script, i.e. multiline input is possible
+        command: |
+            echo We are in the workspace directory: $PWD
+            echo Let's go
+            npm run start
