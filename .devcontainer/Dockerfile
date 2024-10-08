@@ -1,43 +1,33 @@
-FROM mcr.microsoft.com/vscode/devcontainers/base:ubuntu
+FROM mcr.microsoft.com/devcontainers/typescript-node:22-bookworm
 
-# use this Dockerfile to install additional tools you might need, e.g.
+# Install MongoDB command line tools - though mongo-database-tools not available on arm64
+ARG MONGO_TOOLS_VERSION=6.0
+RUN . /etc/os-release \
+    && curl -sSL "https://www.mongodb.org/static/pgp/server-${MONGO_TOOLS_VERSION}.asc" | gpg --dearmor > /usr/share/keyrings/mongodb-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] http://repo.mongodb.org/apt/debian ${VERSION_CODENAME}/mongodb-org/${MONGO_TOOLS_VERSION} main" | tee /etc/apt/sources.list.d/mongodb-org-${MONGO_TOOLS_VERSION}.list \
+    && apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get install -y mongodb-mongosh \
+    && if [ "$(dpkg --print-architecture)" = "amd64" ]; then apt-get install -y mongodb-database-tools; fi \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
+# [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
-# Use base image
 
-# Avoid prompts during installations
-ENV DEBIAN_FRONTEND=noninteractive
+# [Optional] Uncomment if you want to install an additional version of node using nvm
+# ARG EXTRA_NODE_VERSION=10
+# RUN su node -c "source /usr/local/share/nvm/nvm.sh && nvm install ${EXTRA_NODE_VERSION}"
 
-# Install Node.js, MongoDB, and other necessary tools
-RUN apt-get update && apt-get install -y \
-    nodejs \
-    npm \
-    mongodb \
-    curl
+# [Optional] Uncomment if you want to install more global node modules
+# RUN su node -c "npm install -g <your-package-list-here>"
 
-# Install pnpm globally
-RUN npm install -g pnpm
+USER ${USER}
+ARG HOME=/home/${USER}
+WORKDIR ${HOME}
 
-# Set up MongoDB data directory
-RUN mkdir -p /data/db
-
-# Start MongoDB service
-RUN service mongodb start
-
-# Clean up
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Expose ports (e.g., 3000 for Node.js app, 27017 for MongoDB)
-EXPOSE 3000 27017
-
-# Set the working directory for the application
-WORKDIR /workspace
-
-# Copy project files (add a .dockerignore file to avoid copying node_modules)
-COPY . .
-
-# Install dependencies using pnpm
-RUN pnpm install
-
-# Start the Node.js application
-CMD ["pnpm", "start"]
+ARG PNPM_HOME=${HOME}/.local/share/pnpm
+ENV PATH="${PNPM_HOME}:$PATH"
+RUN <<EOT
+    wget -qO- https://get.pnpm.io/install.sh | ENV="${HOME}/.zshrc" SHELL=/bin/zsh sh -
+    pnpm env use -g lts
+EOT

@@ -44,4 +44,4 @@ tasks:
         command: |
             echo We are in the workspace directory: $PWD
             echo Let's go
-            npm run start
+            pnpm run start
